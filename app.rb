@@ -2,18 +2,36 @@
 
 require "base64"
 require "functions_framework"
-require 'json'
-require 'net/http'
-require 'uri'
+require "google/cloud/secret_manager"
+require "json"
+require "net/http"
+require "uri"
 
 class Line
-  TOKEN = ""
   URI = URI.parse("https://api.line.me/v2/bot/message/broadcast")
 
+  def get_secrets()
+    project_id = ENV['PROJECT_ID']
+    secret_name = ENV['SECRET_NAME']
+
+    client = Google::Cloud::SecretManager.secret_manager_service
+    key = client.secret_version_path(
+      project: project_id,
+      secret: secret_name,
+      secret_version: 'latest'
+    )
+    res = client.access_secret_version(
+      name: key
+    )
+    return JSON.parse(res.payload.data)
+  end
+
   def make_broadcast_request(data)
+    secrets = get_secrets()
+    token = secrets['channel_access_token']
     req = Net::HTTP::Post.new(URI.path)
     req["Content-Type"] = "application/json"
-    req["Authorization"] = "Bearer #{TOKEN}"
+    req["Authorization"] = "Bearer #{token}"
     req.body = data.to_json
     return req
   end
@@ -35,6 +53,7 @@ class Line
   end
 end
 
+# Cloud Functions entry point -> broadcast
 FunctionsFramework.cloud_event "broadcast" do |event|
   msg = Base64.decode64(event.data["message"]["data"])
   line = Line.new
