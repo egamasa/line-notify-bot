@@ -1,6 +1,6 @@
 # Pub/Sub notify to LINE bot
 
-Scripts for Google Cloud Functions (FaaS of Google Cloud Platform).
+Scripts for Google Cloud Functions (FaaS of Google Cloud Platform).  
 Send Pub/Sub payload-text to talkroom of LINE bot.
 
 
@@ -33,7 +33,8 @@ Send Pub/Sub payload-text to talkroom of LINE bot.
 ```
 $ gcloud secrets create line-bot-secrets \
     --data-file=secrets.json \
-    --locations=asia-northeast1
+    --locations=asia-northeast1 \
+    --replication-policy=user-managed
 ```
 
 ### Create Pub/Sub topic for trigger
