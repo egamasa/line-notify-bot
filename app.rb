@@ -65,7 +65,7 @@ end
 # Cloud Functions entry point -> broadcast
 FunctionsFramework.cloud_event "broadcast" do |event|
   text = Base64.decode64(event.data["message"]["data"])
-  text = parse_log(text)
+  text = parse_log(text) rescue text
   line = Line.new
   line.send_broadcast(text.force_encoding("UTF-8"))
 end
