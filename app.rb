@@ -1,6 +1,7 @@
 # coding: utf-8
 
 require "base64"
+require "date"
 require "functions_framework"
 require "google/cloud/secret_manager"
 require "json"
@@ -36,12 +37,12 @@ class Line
     return req
   end
 
-  def send_broadcast(msg)
+  def send_broadcast(text)
     data = {
       "messages" => [
         {
           "type" => "text",
-          "text" => msg
+          "text" => text
         }
       ]
     }
@@ -53,9 +54,18 @@ class Line
   end
 end
 
+def parse_log(text)
+  hash = JSON.parse(text)
+  text = hash['textPayload']
+  timestamp = DateTime.parse(hash['timestamp'])
+  timestamp = timestamp.new_offset('+09:00')
+  return "#{text}\n#{timestamp.strftime("%F %T")}"
+end
+
 # Cloud Functions entry point -> broadcast
 FunctionsFramework.cloud_event "broadcast" do |event|
-  msg = Base64.decode64(event.data["message"]["data"])
+  text = Base64.decode64(event.data["message"]["data"])
+  text = parse_log(text) rescue text
   line = Line.new
-  line.send_broadcast(msg.force_encoding("UTF-8"))
+  line.send_broadcast(text.force_encoding("UTF-8"))
 end
